@@ -1,0 +1,24 @@
+{
+  "name": "tp1-arquit-monkeys",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "> **La fecha de entrega para el informe y el código es el jueves 11/05** :bangbang:",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jeremias98/tp1-arquit-monkeys.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jeremias98/tp1-arquit-monkeys/issues"
+  },
+  "homepage": "https://github.com/Jeremias98/tp1-arquit-monkeys#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
