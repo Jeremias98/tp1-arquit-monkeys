@@ -21,7 +21,19 @@ export const GetMetar = async (req, res, next) => {
 
 export const GetSpaceNews = async (req, res, next) => {
     try {
-        const response = await axios.get(`https://api.spaceflightnewsapi.net/v3/articles?_limit=5`);
+        const response = await axios.get('https://api.spaceflightnewsapi.net/v3/articles?_limit=5&_sort=publishedAt:desc');
+        if (!response.data || !response.data.length) throw Error('There are no space news');
+        const titles = response.data.map(data => data.title);
+        res.send(titles);
+    } catch(error) {
+        error.endpoint = req.originalUrl;
+        next(error);
+    }
+}
+
+export const GetUselessFact = async (req, res, next) => {
+    try {
+        const response = await axios.get('https://uselessfacts.jsph.pl/api/v2/facts/random');
         res.send(response.data);
     } catch(error) {
         error.endpoint = req.originalUrl;
