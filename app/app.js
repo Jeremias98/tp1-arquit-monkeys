@@ -1,6 +1,6 @@
 import express from 'express';
 import errorHandler from './middlewares/errorHandler.js';
-import { GetMetar } from './controllers/index.js';
+import { GetMetar, GetSpaceNews } from './controllers/index.js';
 
 const app = express();
 const port = 3000;
@@ -11,7 +11,7 @@ app.get('/ping', (_, res) => res.send('ping'));
 
 app.get('/metar', GetMetar);
 
-app.get('/space_news', (_, res) => res.send('space_news'));
+app.get('/space_news', GetSpaceNews);
 
 app.get('/fact', (_, res) => res.send('fact'));
 
