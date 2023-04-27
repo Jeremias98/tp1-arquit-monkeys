@@ -1,3 +1,18 @@
+# Arquit Monkeys Readme
+
+Levantar contenedores
+```
+docker-compose build --no-cache && docker compose down && docker compose up --force-recreate -d
+```
+
+Ejecutar para obtener respuesta del server
+
+```
+curl localhost:5555/api/
+```
+
+Debería devolver "Hello World!".
+
 # Punto de partida para el TP 1 de Arquitectura del Software (75.73) del 1er cuatrimestre de 2023
 
 > **La fecha de entrega para el informe y el código es el jueves 11/05** :bangbang:
