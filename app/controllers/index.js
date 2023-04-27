@@ -15,6 +15,7 @@ export const GetMetar = async (req, res, next) => {
         res.send(decoded);
     } catch(error) {
         error.endpoint = req.originalUrl;
+        error.message = `Aviationweather's API is not available. Please try again later.`;
         next(error);
     }
 }
