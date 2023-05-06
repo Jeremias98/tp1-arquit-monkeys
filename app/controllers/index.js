@@ -2,6 +2,12 @@ import axios from 'axios';
 import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'metar-decoder';
 import https from 'https'
+import {createClient} from "redis"
+
+const redisClient = createClient({url: 'redis://redis:6379'});
+
+await redisClient.connect();
+console.log("Redis client connected")
 
 const parser = new XMLParser();
 const httpsAgent =  new https.Agent({
@@ -49,6 +55,93 @@ export const GetUselessFact = async (req, res, next) => {
             {httpsAgent}
         );
         res.send(response.data);
+    } catch(error) {
+        error.endpoint = req.originalUrl;
+        next(error);
+    }GetMetarRedis
+}
+
+export const GetMetarRedis = async (req, res, next) => {
+    const { station } = req.query;
+
+    try {
+        let metarRes;
+
+        // Busco en cache
+        const metarResString = await redisClient.get("metar_" + station);
+        // Si esta en el cache devuelvo eso, si no los busco y los guardo en el cache
+        if (metarResString !== null) {
+            metarRes = JSON.parse(metarResString);
+        } else {
+
+            const response = await axios.get(
+                `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
+                {httpsAgent}
+            );
+            const parsed = parser.parse(response.data);
+            const rawMETAR = parsed.response.data.METAR;
+            metarRes =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
+
+            await redisClient.set("metar_" + station, JSON.stringify(metarRes), {
+                EX:5 // Guardate este valor por X cantidad de tiempo en el cache de redis
+            })
+        }
+        res.send(uselessFact);
+    } catch(error) {
+        error.endpoint = req.originalUrl;
+        next(error);
+    }
+}
+
+export const GetSpaceNewsRedis = async (req, res, next) => {
+    try {
+        let titles;
+
+        // Busco en cache
+        const titlesString = await redisClient.get("space_news");
+        // Si esta en el cache devuelvo eso, si no los busco y los guardo en el cache
+        if (titlesString !== null) {
+            titles = JSON.parse(titlesString);
+        } else {
+            const response = await axios.get(
+                'https://api.spaceflightnewsapi.net/v3/articles?_limit=5&_sort=publishedAt:desc',
+                {httpsAgent}
+            );
+            if (!response.data || !response.data.length) throw Error('There are no space news');
+                titles = response.data.map(data => data.title);
+
+            await redisClient.set('space_news', JSON.stringify(titles), {
+                EX:5 // Guardate este valor por X cantidad de tiempo en el cache de redis
+            })
+        }
+
+        res.send(titles);
+    } catch(error) {
+        error.endpoint = req.originalUrl;
+        next(error);
+    }
+}
+
+export const GetUselessFactRedis = async (req, res, next) => {
+    try {
+        let uselessFact;
+
+        // Busco en cache
+        const uselessFactString = await redisClient.get("useless_fact");
+        // Si esta en el cache devuelvo eso, si no los busco y los guardo en el cache
+        if (uselessFactString !== null) {
+            uselessFact = JSON.parse(uselessFactString);
+        } else {
+            const response = axios.get(
+                'https://uselessfacts.jsph.pl/api/v2/facts/random',
+                {httpsAgent}
+            );
+            uselessFact = response.data;
+            await redisClient.set('useless_fact', JSON.stringify(uselessFact), {
+                EX:5 // Guardate este valor por X cantidad de tiempo en el cache de redis
+            })
+        }
+        res.send(uselessFact);
     } catch(error) {
         error.endpoint = req.originalUrl;
         next(error);

@@ -23,7 +23,23 @@ Ejecutar para obtener respuesta del server
 ```
 
 ``` zsh
+➜  curl localhost:5555/api/space_news
+```
+
+``` zsh
 ➜  url http://localhost:5555/api/metar?station=SAEZ
+```
+
+``` zsh
+➜  curl localhost:5555/api/redis/fact
+```
+
+``` zsh
+➜  curl localhost:5555/api/redis/space_news
+```
+
+``` zsh
+➜  curl localhost:5555/api/redis/metar?station=SAEZ
 ```
 
 ## Apache Bench
