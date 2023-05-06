@@ -5,7 +5,7 @@ import https from 'https'
 
 const parser = new XMLParser();
 const httpsAgent =  new https.Agent({
-    rejectUnauthorized: false
+    rejectUnauthorized: false // Needed for Mac OS
 });
 
 export const GetMetar = async (req, res, next) => {
