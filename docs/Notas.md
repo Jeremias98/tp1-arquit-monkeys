@@ -6,6 +6,23 @@
 ➜  docker-compose build --no-cache && docker compose down && docker compose up --force-recreate -d
 ```
 
+### Caso si quiero 3 instancias de node (caso laod-balancer del nginx_reverse_proxy.conf):
+
+El primer comando agrega instancias.
+
+El segundo command recarga la configuracion del container pasado (en este caso: tp1-arquit-monkeys-node-1)
+
+Round-robin por default nginx
+
+curl -v me muestra el header. El parametro: `X-API-Id` nos sirve para identificar la distimtas instancias de ngix en el caso de load-balancing e identificar si una instancia esta ams cargada que otra.
+
+``` zsh
+➜ docker compose up --force-recreate -d --scale node=3
+
+➜ docker kill --signal="SIGHUP" tp1-arquit-monkeys-node-1
+
+```
+
 ## API
 
 Ejecutar para obtener respuesta del server
@@ -67,7 +84,10 @@ Esto se puede comprobar en cAdvisor que no te muestra los containers si no.
 Descarga:
 
 ``` zsh
-➜  npm install -g artillery@latest
+➜ pwd
+tp1-arquit-monkeys/perf
+
+➜  npm install
 ```
 
 Corrida ejemplo:
@@ -89,3 +109,4 @@ tp1-arquit-monkeys/perf
 - No olvidar agregar a graphite como data source (Endpoint: `http://graphite`)
 - La contraseña e usuario inicial siempre es `admin`
 - No olvidan que grafana se guarda en un volumen local. Si se agregan graficos se tiene que exportar el dashboard como json para que este en el repositorio!
+- `new_dashboard.json` es un nuevo dashboard para que hagamos nuestras metricas.

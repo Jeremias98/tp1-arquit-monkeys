@@ -58,7 +58,7 @@ export const GetUselessFact = async (req, res, next) => {
     } catch(error) {
         error.endpoint = req.originalUrl;
         next(error);
-    }GetMetarRedis
+    }
 }
 
 export const GetMetarRedis = async (req, res, next) => {
