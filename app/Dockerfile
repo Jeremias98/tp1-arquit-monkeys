@@ -1,6 +1,6 @@
 FROM node:18.12.1
 
-RUN mkdir /opt/app
+RUN mkdir -p /opt/app
 
 WORKDIR /opt/app
 
