@@ -2,7 +2,7 @@
 
 Levantar contenedores
 ```
-docker-compose build --no-cache && docker compose down && docker compose up --force-recreate -d
+docker-compose build --no-cache && docker-compose down && docker-compose up --force-recreate -d
 ```
 
 Ejecutar para obtener respuesta del server

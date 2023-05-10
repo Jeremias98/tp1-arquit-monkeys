@@ -44,7 +44,7 @@ Ejecutar para obtener respuesta del server
 ```
 
 ``` zsh
-➜  url http://localhost:5555/api/metar?station=SAEZ
+➜  curl http://localhost:5555/api/metar?station=SAEZ
 ```
 
 ``` zsh
@@ -110,3 +110,13 @@ tp1-arquit-monkeys/perf
 - La contraseña e usuario inicial siempre es `admin`
 - No olvidan que grafana se guarda en un volumen local. Si se agregan graficos se tiene que exportar el dashboard como json para que este en el repositorio!
 - `new_dashboard.json` es un nuevo dashboard para que hagamos nuestras metricas.
+
+
+## Caso cache
+
+- Explicacion de "Caching design patterns"y ejemplo de codigoen python :
+https://aws.amazon.com/caching/best-practices/
+
+## Data de METAR
+Link de donde sacamos los ID de estaciones:
+- https://metar-taf.com/airports?page=1&per-page=250

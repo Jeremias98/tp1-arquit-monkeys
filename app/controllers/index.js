@@ -67,13 +67,12 @@ export const GetMetarRedis = async (req, res, next) => {
     try {
         let metarRes;
 
-        // Busco en cache
+        // Check the cache
         const metarResString = await redisClient.get("metar_" + station);
-        // Si esta en el cache devuelvo eso, si no los busco y los guardo en el cache
         if (metarResString !== null) {
             metarRes = JSON.parse(metarResString);
         } else {
-
+            // Populate the cache
             const response = await axios.get(
                 `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
                 {httpsAgent}
@@ -83,23 +82,23 @@ export const GetMetarRedis = async (req, res, next) => {
             metarRes =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
 
             await redisClient.set("metar_" + station, JSON.stringify(metarRes), {
-                EX:5 // Guardate este valor por X cantidad de tiempo en el cache de redis
+                EX:30// Time-to-live
             })
         }
-        res.send(uselessFact);
+        res.send(metarRes);
     } catch(error) {
         error.endpoint = req.originalUrl;
         next(error);
     }
 }
 
+// Lazy caching
 export const GetSpaceNewsRedis = async (req, res, next) => {
     try {
         let titles;
-
-        // Busco en cache
+        // Check the cache
         const titlesString = await redisClient.get("space_news");
-        // Si esta en el cache devuelvo eso, si no los busco y los guardo en el cache
+       // Populate the cache
         if (titlesString !== null) {
             titles = JSON.parse(titlesString);
         } else {
@@ -111,7 +110,7 @@ export const GetSpaceNewsRedis = async (req, res, next) => {
                 titles = response.data.map(data => data.title);
 
             await redisClient.set('space_news', JSON.stringify(titles), {
-                EX:5 // Guardate este valor por X cantidad de tiempo en el cache de redis
+                EX:30 // Time-to-live in seconds
             })
         }
 
@@ -126,10 +125,9 @@ export const GetUselessFactRedis = async (req, res, next) => {
     try {
         let uselessFact;
 
-        // Busco en cache
         const uselessFactString = await redisClient.get("useless_fact");
-        // Si esta en el cache devuelvo eso, si no los busco y los guardo en el cache
-        if (uselessFactString !== null) {
+       // Populate the cache
+       if (uselessFactString !== null) {
             uselessFact = JSON.parse(uselessFactString);
         } else {
             const response = axios.get(
