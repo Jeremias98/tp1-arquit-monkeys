@@ -24,11 +24,10 @@ config:
     - name: Clean
       duration: 10
       arrivalRate: 1
-
 scenarios:
-  - name: MetAr Redis (/redis/metar)
+  - name: MetAr (/rate-limiter/metar)
     flow:
       - get:
-          url: '/redis/metar'
+          url: '/rate-limiter/metar'
           qs:
             station: "{{ airport }}"

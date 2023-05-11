@@ -7,28 +7,23 @@ config:
           host: localhost
           port: 8125
           prefix: "artillery-api"
-  payload:
-    path: "../top-500-airports-worldwide.csv"
-    fields:
-      - "airport"
+
   pool: 50 # All HTTP requests from all virtual users will be sent over the same connections
 
   phases:
     - name: Ramp
-      duration: 60
-      arrivalRate: 10
-      rampTo: 100
-    - name: Plain
       duration: 30
-      arrivalRate: 100
+      arrivalRate: 20
+      rampTo: 90
+    - name: Plain
+      duration: 60
+      arrivalRate: 90
     - name: Clean
       duration: 10
       arrivalRate: 1
 
 scenarios:
-  - name: MetAr Redis (/redis/metar)
+  - name: Space News (/rate-limiter/space_news)
     flow:
       - get:
-          url: '/redis/metar'
-          qs:
-            station: "{{ airport }}"
+          url: '/rate-limiter/space_news'
