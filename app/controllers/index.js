@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'metar-decoder';
-import https from 'https'
-import {createClient} from "redis"
+import https from 'https';
+import {createClient} from "redis";
 
 const redisClient = createClient({url: 'redis://redis:6379'});
 
@@ -13,6 +13,15 @@ const parser = new XMLParser();
 const httpsAgent =  new https.Agent({
     rejectUnauthorized: false // Needed for Mac OS
 });
+
+export const GetPing = (req, res, next) => {
+    try {
+        res.send('ping');
+    } catch(error) {
+        error.endpoint = req.originalUrl;
+        next(error);
+    }
+}
 
 export const GetMetar = async (req, res, next) => {
     try {

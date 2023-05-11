@@ -1,9 +1,34 @@
 # Arquit Monkeys Readme
 
-Levantar contenedores
+Para levantar una instancia, debe estar definida una sola en el nginx_reverse_proxy.conf
+
+```
+upstream api {
+    server tp1-arquit-monkeys-node-1:3000; # Instance 1
+}
+```
+
+Levantar contenedores (una instancia)
 ```
 docker-compose build --no-cache && docker-compose down && docker-compose up --force-recreate -d
 ```
+
+
+Para levantar tres instancias, deben estar definidas las tres en el nginx_reverse_proxy.conf
+
+```
+upstream api {
+    server tp1-arquit-monkeys-node-1:3000; # Instance 1
+    server tp1-arquit-monkeys-node-2:3000; # Instance 2
+    server tp1-arquit-monkeys-node-3:3000; # Instance 3
+}
+```
+
+Levantar contenedores (tres instancias)
+```
+docker-compose build --no-cache && docker-compose down && docker-compose up --force-recreate -d --scale node=3
+```
+
 
 Ejecutar para obtener respuesta del server
 
