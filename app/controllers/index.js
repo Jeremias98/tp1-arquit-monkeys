@@ -3,11 +3,23 @@ import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'metar-decoder';
 import https from 'https';
 import {createClient} from "redis";
+import {StatsD} from 'hot-shots'
 
+// Redis Client
 const redisClient = createClient({url: 'redis://redis:6379'});
 
 await redisClient.connect();
 console.log("Redis client connected")
+
+// StatsD Client
+const statsDClient = new StatsD({
+    port: 8125,
+    globalTags: { env: process.env.NODE_ENV },
+    errorHandler: function (error) {
+        console.log("StatsD socket errors caught here: ", error);
+    },
+});
+console.log("StatsD client connected")
 
 const parser = new XMLParser();
 const httpsAgent =  new https.Agent({
@@ -15,6 +27,8 @@ const httpsAgent =  new https.Agent({
 });
 
 export const GetPing = (req, res, next) => {
+    statsDClient.increment('my_ping_counter');
+
     try {
         res.send('ping');
     } catch(error) {
@@ -22,6 +36,8 @@ export const GetPing = (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetPing, 'ping_response_time');
+
 
 export const GetMetar = async (req, res, next) => {
     try {
@@ -31,6 +47,7 @@ export const GetMetar = async (req, res, next) => {
             `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
             {httpsAgent}
         );
+
         const parsed = parser.parse(response.data);
         const rawMETAR = parsed.response.data.METAR;
         const decoded =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
@@ -41,6 +58,8 @@ export const GetMetar = async (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetMetar, 'metar_response_time');
+
 
 export const GetSpaceNews = async (req, res, next) => {
     try {
@@ -56,6 +75,7 @@ export const GetSpaceNews = async (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetSpaceNews, 'space_news_response_time');
 
 export const GetUselessFact = async (req, res, next) => {
     try {
@@ -69,6 +89,7 @@ export const GetUselessFact = async (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetUselessFact, 'useless_fact_response_time');
 
 export const GetMetarRedis = async (req, res, next) => {
     const { station } = req.query;
@@ -100,6 +121,7 @@ export const GetMetarRedis = async (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetMetarRedis, 'metar_redis_response_time');
 
 // Lazy caching
 export const GetSpaceNewsRedis = async (req, res, next) => {
@@ -129,6 +151,7 @@ export const GetSpaceNewsRedis = async (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetSpaceNewsRedis, 'space_news_redis_response_time');
 
 export const GetUselessFactRedis = async (req, res, next) => {
     try {
@@ -154,3 +177,4 @@ export const GetUselessFactRedis = async (req, res, next) => {
         next(error);
     }
 }
+statsDClient.timer(GetUselessFactRedis, 'useless_fact_response_time');

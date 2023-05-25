@@ -37,6 +37,7 @@ services:
             - "grafana_config:/var/lib/grafana"
 
     cadvisor:
+        privileged: true
         image: gcr.io/cadvisor/cadvisor:v0.47.0
         links:
             - graphite
@@ -48,7 +49,8 @@ services:
             - "/var/run/docker.sock:/var/run/docker.sock:rw" # For Mac Os: /var/run/docker.sock:/var/run/docker.sock:rw. For ubuntu: /var/run:/var/run:rw
             - "/sys:/sys:ro"
             - "/var/lib/docker/:/var/lib/docker:ro"
-
+            - /etc/machine-id:/etc/machine-id:ro
+            - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
 volumes:
     grafana_config:
         driver: local

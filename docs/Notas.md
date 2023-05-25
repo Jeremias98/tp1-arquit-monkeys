@@ -110,8 +110,42 @@ tp1-arquit-monkeys/perf
 - La contraseña e usuario inicial siempre es `admin`
 - No olvidan que grafana se guarda en un volumen local. Si se agregan graficos se tiene que exportar el dashboard como json para que este en el repositorio!
 - `new_dashboard.json` es un nuevo dashboard para que hagamos nuestras metricas.
+- to reset password run:
 
+```bash
+> docker exec -it <graphana container id> /bin/bash
+> grafana-cli admin reset-admin-password
+> exit
+```
 
+Example:
+
+``` bash
+➜  app git:(metricas-propias) docker exec -it 6faa47e837368051a2cd699bcc5d614e8a190791174f350c3ea6a62553ef7ff2 /bin/bash
+bash-5.1$ grafana-cli admin reset-admin-password admin
+INFO [05-25|16:54:21] Starting Grafana                         logger=settings version= commit= branch= compiled=1970-01-01T00:00:00Z
+INFO [05-25|16:54:21] Config loaded from                       logger=settings file=/usr/share/grafana/conf/defaults.ini
+INFO [05-25|16:54:21] Config overridden from Environment variable logger=settings var="GF_PATHS_DATA=/var/lib/grafana"
+INFO [05-25|16:54:21] Config overridden from Environment variable logger=settings var="GF_PATHS_LOGS=/var/log/grafana"
+INFO [05-25|16:54:21] Config overridden from Environment variable logger=settings var="GF_PATHS_PLUGINS=/var/lib/grafana/plugins"
+INFO [05-25|16:54:21] Config overridden from Environment variable logger=settings var="GF_PATHS_PROVISIONING=/etc/grafana/provisioning"
+INFO [05-25|16:54:21] Path Home                                logger=settings path=/usr/share/grafana
+INFO [05-25|16:54:21] Path Data                                logger=settings path=/var/lib/grafana
+INFO [05-25|16:54:21] Path Logs                                logger=settings path=/var/log/grafana
+INFO [05-25|16:54:21] Path Plugins                             logger=settings path=/var/lib/grafana/plugins
+INFO [05-25|16:54:21] Path Provisioning                        logger=settings path=/etc/grafana/provisioning
+INFO [05-25|16:54:21] App mode production                      logger=settings
+INFO [05-25|16:54:21] Connecting to DB                         logger=sqlstore dbtype=sqlite3
+INFO [05-25|16:54:21] Starting DB migrations                   logger=migrator
+INFO [05-25|16:54:21] migrations completed                     logger=migrator performed=0 skipped=452 duration=603.08µs
+INFO [05-25|16:54:21] Envelope encryption state                logger=secrets enabled=true current provider=secretKey.v1
+INFO [05-25|16:54:21] Plugin registered                        logger=plugin.loader pluginID=input
+
+Admin password changed successfully ✔
+
+bash-5.1$ exit
+exit
+```
 ## Caso cache
 
 - Explicacion de "Caching design patterns"y ejemplo de codigoen python :
