@@ -12,14 +12,71 @@ await redisClient.connect();
 console.log("Redis client connected")
 
 // StatsD Client
-const statsDClient = new StatsD({
-    port: 8125,
-    globalTags: { env: process.env.NODE_ENV },
-    errorHandler: function (error) {
-        console.log("StatsD socket errors caught here: ", error);
-    },
-});
-console.log("StatsD client connected")
+
+function runMetrics() {
+    const statsDClient = new StatsD({
+      host: 'graphite',
+      port: 8125,
+      protocol: 'udp',
+      prefix: 'custom.metrics.',
+      errorHandler: function (error) {
+        console.log("Socket errors caught here: ", error);
+      },
+
+    });
+
+    const startTime = new Date();
+
+
+    // Send metrics
+    statsDClient.timing('users2.timers', 42);
+    statsDClient.timing('users2.timer', 42);
+    statsDClient.timing('timers.users2', 42);
+    statsDClient.timing('timer.users2', 42);
+
+    statsDClient.timer('users9.timers', 42);
+    statsDClient.timer('users9.timer', 42);
+    statsDClient.timer('timers.users9', 42);
+    statsDClient.timer('timer.users9', 42);
+
+    statsDClient.timing('users2.timers', 80);
+    statsDClient.timing('users2.timer', 80);
+    statsDClient.timing('timers.users2', 80);
+    statsDClient.timing('timer.users2', 80);
+
+    statsDClient.timer('users9.timers', 80);
+    statsDClient.timer('users9.timer', 80);
+    statsDClient.timer('timers.users9', 80);
+    statsDClient.timer('timer.users9', 80);
+    statsDClient.increment('users4.count');
+
+        // Timing: sends a timing command with the specified milliseconds
+        statsDClient.timing('users8.timer', 42);
+        statsDClient.timing('users8.timer', 42);
+
+        // Timing: also accepts a Date object of which the difference is calculated
+        statsDClient.timing('users7.timer', new Date());
+
+
+    // Calculate the elapsed time
+    const endTime = new Date();
+    const elapsedMs = endTime - startTime;
+
+    // Send the elapsed time as a Timer metric
+    statsDClient.timing('users5', elapsedMs);
+
+    statsDClient.timer('user3', 42);
+
+    statsDClient.gauge('gagues.users1', 100);
+
+    console.log("Metrics sent");
+
+    // Close the StatsD client after sending metrics
+    statsDClient.close();
+
+    // Other controller logic...
+    // ...
+}
 
 const parser = new XMLParser();
 const httpsAgent =  new https.Agent({
@@ -27,7 +84,7 @@ const httpsAgent =  new https.Agent({
 });
 
 export const GetPing = (req, res, next) => {
-    statsDClient.increment('my_ping_counter');
+    runMetrics();
 
     try {
         res.send('ping');
@@ -36,10 +93,11 @@ export const GetPing = (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetPing, 'ping_response_time');
 
 
 export const GetMetar = async (req, res, next) => {
+    runMetrics();
+
     try {
         const { station } = req.query;
 
@@ -58,10 +116,10 @@ export const GetMetar = async (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetMetar, 'metar_response_time');
-
 
 export const GetSpaceNews = async (req, res, next) => {
+    runMetrics();
+
     try {
         const response = await axios.get(
             'https://api.spaceflightnewsapi.net/v3/articles?_limit=5&_sort=publishedAt:desc',
@@ -75,9 +133,10 @@ export const GetSpaceNews = async (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetSpaceNews, 'space_news_response_time');
 
 export const GetUselessFact = async (req, res, next) => {
+    runMetrics();
+
     try {
         const response = await axios.get(
             'https://uselessfacts.jsph.pl/api/v2/facts/random',
@@ -89,7 +148,6 @@ export const GetUselessFact = async (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetUselessFact, 'useless_fact_response_time');
 
 export const GetMetarRedis = async (req, res, next) => {
     const { station } = req.query;
@@ -121,7 +179,6 @@ export const GetMetarRedis = async (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetMetarRedis, 'metar_redis_response_time');
 
 // Lazy caching
 export const GetSpaceNewsRedis = async (req, res, next) => {
@@ -151,7 +208,6 @@ export const GetSpaceNewsRedis = async (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetSpaceNewsRedis, 'space_news_redis_response_time');
 
 export const GetUselessFactRedis = async (req, res, next) => {
     try {
@@ -177,4 +233,4 @@ export const GetUselessFactRedis = async (req, res, next) => {
         next(error);
     }
 }
-statsDClient.timer(GetUselessFactRedis, 'useless_fact_response_time');
+
