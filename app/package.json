@@ -25,7 +25,6 @@
     "fast-xml-parser": "^4.2.0",
     "hot-shots": "10.0.0",
     "metar-decoder": "^1.0.3",
-    "node-statsd": "^0.1.1",
     "redis": "^4.6.6"
   }
 }

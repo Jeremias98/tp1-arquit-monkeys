@@ -38,21 +38,21 @@ export const GetPing = (req, res, next) => {
 }
 
 export const GetMetar = async (req, res, next) => {
-    const startTime = new Date();
+    const startTime = new Date().getTime();
     try {
         const { station } = req.query;
 
-        const startTimeAPI = new Date()
+        const startTimeAPI = new Date().getTime()
         const response = await axios.get(
             `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
             {httpsAgent}
         );
-        const endTimeAPI = new Date();
+        const endTimeAPI = new Date().getTime();
 
         const parsed = parser.parse(response.data);
         const rawMETAR = parsed.response.data.METAR;
         const decoded =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
-        const endTime = new Date();
+        const endTime = new Date().getTime();
 
         statsDClient.gauge("metar.api", endTimeAPI - startTimeAPI);
         statsDClient.gauge("metar.normal", endTime - startTime);
@@ -83,7 +83,6 @@ export const GetSpaceNews = async (req, res, next) => {
 }
 
 export const GetUselessFact = async (req, res, next) => {
-    runMetrics();
 
     try {
         const response = await axios.get(
@@ -98,7 +97,7 @@ export const GetUselessFact = async (req, res, next) => {
 }
 
 export const GetMetarRedis = async (req, res, next) => {
-    const startTime = new Date();
+    const startTime = new Date().getTime();
 
     const { station } = req.query;
 
@@ -111,12 +110,12 @@ export const GetMetarRedis = async (req, res, next) => {
             metarRes = JSON.parse(metarResString);
         } else {
             // Populate the cache
-            const startTimeAPI = new Date();
+            const startTimeAPI = new Date().getTime();
             const response = await axios.get(
                 `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
                 {httpsAgent}
             );
-            const endTimeAPI = new Date();
+            const endTimeAPI = new Date().getTime();
             const parsed = parser.parse(response.data);
             const rawMETAR = parsed.response.data.METAR;
             metarRes =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
@@ -124,11 +123,11 @@ export const GetMetarRedis = async (req, res, next) => {
             await redisClient.set("metar_" + station, JSON.stringify(metarRes), {
                 EX:30// Time-to-live
             })
-            statsDClient.gauge("metar.api", endTimeAPI - startTimeAPI);
+            statsDClient.gauge("metar_redis.api", endTimeAPI - startTimeAPI);
 
         }
-        const endTime = new Date();
-        statsDClient.gauge("metar.normal", endTime - startTime);
+        const endTime = new Date().getTime();
+        statsDClient.gauge("metar_redis.normal", endTime - startTime);
         res.send(metarRes);
     } catch(error) {
         error.endpoint = req.originalUrl;
