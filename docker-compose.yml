@@ -20,10 +20,13 @@ services:
             - node
 
     graphite:
-        image: graphiteapp/graphite-statsd:1.1.10-4
+        privileged: true
+        image: graphiteapp/graphite-statsd:1.1.8-8
         volumes:
             - ./statsd.config.js:/opt/statsd/config.js
             - ./graphite.storage-schemas.conf:/opt/graphite/conf/storage-schemas.conf
+            - ./graphite.blacklist.conf:/opt/graphite/conf/blacklist.conf
+            - ./graphite.storage-aggregation.conf:/opt/graphite/conf/storage-aggregation.conf
         ports:
             - "8090:80"
             - "8125:8125/udp"

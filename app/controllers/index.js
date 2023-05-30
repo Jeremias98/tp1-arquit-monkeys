@@ -3,89 +3,32 @@ import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'metar-decoder';
 import https from 'https';
 import {createClient} from "redis";
+
 import {StatsD} from 'hot-shots'
 
+const statsDClient = new StatsD({
+    host: 'graphite',
+    port: 8125,
+    protocol: 'udp',
+    prefix: 'custom.metrics.',
+    errorHandler: function (error) {
+      console.log("Socket errors caught here: ", error);
+    },
+
+  });
 // Redis Client
 const redisClient = createClient({url: 'redis://redis:6379'});
 
 await redisClient.connect();
 console.log("Redis client connected")
 
-// StatsD Client
-
-function runMetrics() {
-    const statsDClient = new StatsD({
-      host: 'graphite',
-      port: 8125,
-      protocol: 'udp',
-      prefix: 'custom.metrics.',
-      errorHandler: function (error) {
-        console.log("Socket errors caught here: ", error);
-      },
-
-    });
-
-    const startTime = new Date();
-
-
-    // Send metrics
-    statsDClient.timing('users2.timers', 42);
-    statsDClient.timing('users2.timer', 42);
-    statsDClient.timing('timers.users2', 42);
-    statsDClient.timing('timer.users2', 42);
-
-    statsDClient.timer('users9.timers', 42);
-    statsDClient.timer('users9.timer', 42);
-    statsDClient.timer('timers.users9', 42);
-    statsDClient.timer('timer.users9', 42);
-
-    statsDClient.timing('users2.timers', 80);
-    statsDClient.timing('users2.timer', 80);
-    statsDClient.timing('timers.users2', 80);
-    statsDClient.timing('timer.users2', 80);
-
-    statsDClient.timer('users9.timers', 80);
-    statsDClient.timer('users9.timer', 80);
-    statsDClient.timer('timers.users9', 80);
-    statsDClient.timer('timer.users9', 80);
-    statsDClient.increment('users4.count');
-
-        // Timing: sends a timing command with the specified milliseconds
-        statsDClient.timing('users8.timer', 42);
-        statsDClient.timing('users8.timer', 42);
-
-        // Timing: also accepts a Date object of which the difference is calculated
-        statsDClient.timing('users7.timer', new Date());
-
-
-    // Calculate the elapsed time
-    const endTime = new Date();
-    const elapsedMs = endTime - startTime;
-
-    // Send the elapsed time as a Timer metric
-    statsDClient.timing('users5', elapsedMs);
-
-    statsDClient.timer('user3', 42);
-
-    statsDClient.gauge('gagues.users1', 100);
-
-    console.log("Metrics sent");
-
-    // Close the StatsD client after sending metrics
-    statsDClient.close();
-
-    // Other controller logic...
-    // ...
-}
-
 const parser = new XMLParser();
 const httpsAgent =  new https.Agent({
     rejectUnauthorized: false // Needed for Mac OS
 });
 
-export const GetPing = (req, res, next) => {
-    runMetrics();
 
+export const GetPing = (req, res, next) => {
     try {
         res.send('ping');
     } catch(error) {
@@ -94,31 +37,36 @@ export const GetPing = (req, res, next) => {
     }
 }
 
-
 export const GetMetar = async (req, res, next) => {
-    runMetrics();
-
+    const startTime = new Date();
     try {
         const { station } = req.query;
 
+        const startTimeAPI = new Date()
         const response = await axios.get(
             `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
             {httpsAgent}
         );
+        const endTimeAPI = new Date();
 
         const parsed = parser.parse(response.data);
         const rawMETAR = parsed.response.data.METAR;
         const decoded =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
+        const endTime = new Date();
+
+        statsDClient.gauge("metar.api", endTimeAPI - startTimeAPI);
+        statsDClient.gauge("metar.normal", endTime - startTime);
+
         res.send(decoded);
     } catch(error) {
         error.endpoint = req.originalUrl;
+        console.log(error);
         error.message = `Aviationweather's API is not available. Please try again later.`;
         next(error);
     }
 }
 
 export const GetSpaceNews = async (req, res, next) => {
-    runMetrics();
 
     try {
         const response = await axios.get(
@@ -150,6 +98,8 @@ export const GetUselessFact = async (req, res, next) => {
 }
 
 export const GetMetarRedis = async (req, res, next) => {
+    const startTime = new Date();
+
     const { station } = req.query;
 
     try {
@@ -161,10 +111,12 @@ export const GetMetarRedis = async (req, res, next) => {
             metarRes = JSON.parse(metarResString);
         } else {
             // Populate the cache
+            const startTimeAPI = new Date();
             const response = await axios.get(
                 `https://www.aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${station}&hoursBeforeNow=1`,
                 {httpsAgent}
             );
+            const endTimeAPI = new Date();
             const parsed = parser.parse(response.data);
             const rawMETAR = parsed.response.data.METAR;
             metarRes =  Array.isArray(rawMETAR) ? rawMETAR.map(metar => decode(metar.raw_text)) : [decode(rawMETAR.raw_text)];
@@ -172,7 +124,11 @@ export const GetMetarRedis = async (req, res, next) => {
             await redisClient.set("metar_" + station, JSON.stringify(metarRes), {
                 EX:30// Time-to-live
             })
+            statsDClient.gauge("metar.api", endTimeAPI - startTimeAPI);
+
         }
+        const endTime = new Date();
+        statsDClient.gauge("metar.normal", endTime - startTime);
         res.send(metarRes);
     } catch(error) {
         error.endpoint = req.originalUrl;
@@ -182,6 +138,7 @@ export const GetMetarRedis = async (req, res, next) => {
 
 // Lazy caching
 export const GetSpaceNewsRedis = async (req, res, next) => {
+
     try {
         let titles;
         // Check the cache
